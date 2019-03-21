@@ -1,0 +1,98 @@
+/* 
+ * End to End Secure Communication
+ */
+
+// The protocol description
+
+usertype id,pass,verifiableidentity,Message,Data,Filteredata,Blockid; const Fresh: Function;
+
+protocol E2E(I,R,S,B,F,C)
+{
+	role I // IoT Device
+	{
+		fresh i: id; 
+		fresh p:pass;
+                var vi: verifiableidentity;
+                hashfunction H;
+		fresh m: Message;
+                fresh d : Data;
+             // Authentication phase
+		send_1(I,R, (i,p) );
+                recv_2(R,I,(vi,{H(vi)}sk(R)));
+            // IoT Service
+                send_3(I,S,(i,{H(vi)}sk(I)));
+           // Blockchain
+              send_4(I,B,(vi));
+         //Service message access request
+                send_5(I,F,(m,{H(m)}sk(I)));
+        // Data send 
+                send_6(I,F,(d,{H(d)}sk(I)));
+       //   Security Properties  claimed by IoT Device
+                 claim_i1(I,Secret,i);
+                 claim_i2(I,Secret,p);
+                 claim_i3(I,Alive);
+                 claim_i4(I,Weakagree);
+                 claim_i5(I,Niagree);
+                 claim_i6(I,Nisynch);	
+	}
+	
+	role R    // Registration authority
+
+	{
+		var i: id;
+                var p:pass;
+		fresh vi: verifiableidentity;
+                hashfunction H;
+                recv_1(I,R, (i,p) );
+		send_2(R,I,(vi,{H(vi)}sk(R)));	
+                       
+	}
+     role S    //   Rest Service
+{ 
+                      var i:id;
+                     hashfunction H;
+                     var vi:verifiableidentity;
+                     recv_3(I,S,(i,{H(vi)}sk(I)));
+                    claim_s1(S,Alive);
+                    claim_s2(S,Weakagree);
+                   claim_s3(S,Niagree);
+                   claim_s4(S,Nisynch);
+
+}
+   role B  // Blockchain
+{
+                      hashfunction H;
+                     var fd: Filteredata;
+                     var vi:verifiableidentity;
+                     recv_4(I,B,(vi));
+                     recv_7(F,B,{H(fd)}sk(F));
+                    claim_b1(B,Alive);
+                    claim_b2(B,Weakagree);
+                    claim_b3(B,Niagree);
+                     claim_b4(B,Nisynch);
+ }
+  role F  // Fog
+{
+                    fresh fd: Filteredata;
+                   fresh bid: Blockid;
+                   hashfunction H;
+                   var m: Message;
+                   var d : Data;
+                   recv_5(I,F,(m,{H(m)}sk(I)));
+                   recv_6(I,F,(d,{H(d)}sk(I)));
+                   send_7(F,B,{H(fd)}sk(F));
+                   send_8(F,C,{bid,fd}sk(F));
+                   claim_f1(F,Alive);
+                   claim_f2(F,Weakagree);
+                   claim_f3(F,Niagree);
+                   claim_f4(F,Nisynch);
+}
+  role C  // cloud
+{
+                   var fd:Filteredata;
+                   var bid: Blockid;
+                   recv_8(F,C,{bid,fd}sk(F));
+
+
+}
+}
